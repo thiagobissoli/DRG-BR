@@ -1,33 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import {
-  CCard,
-  CCardBody,
-  CCardHeader,
-  CCol,
-  CRow,
-  CTable,
-  CTableBody,
-  CTableDataCell,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
-  CButton,
-  CSpinner,
-  CAlert,
-  CBadge,
-  CModal,
-  CModalHeader,
-  CModalTitle,
-  CModalBody,
-  CModalFooter,
-  CForm,
-  CFormInput,
-  CFormLabel,
-  CFormCheck,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilPlus, cilPencil } from '@coreui/icons'
 import axios from 'axios'
+
+const permissionLabel = (name) => {
+  const labels = {
+    'user.manage': 'Gerenciar usuários',
+    'role.manage': 'Gerenciar perfis',
+    'api_key.manage': 'Gerenciar chaves API',
+    'extract.run': 'Executar extração',
+    'train.run': 'Executar treinamento',
+    'predict.use': 'Usar predição (API)',
+    'usage.view': 'Ver uso e quotas',
+  }
+  return labels[name] || name
+}
 
 const Roles = () => {
   const [roles, setRoles] = useState([])
@@ -35,16 +20,12 @@ const Roles = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-
   const [showModal, setShowModal] = useState(false)
   const [editingRole, setEditingRole] = useState(null)
   const [form, setForm] = useState({ name: '', description: '', permission_ids: [] })
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
+  useEffect(() => { loadData() }, [])
   useEffect(() => {
     if (success || error) {
       const t = setTimeout(() => { setSuccess(null); setError(null) }, 4000)
@@ -76,44 +57,28 @@ const Roles = () => {
 
   const openEdit = (role) => {
     setEditingRole(role)
-    setForm({
-      name: role.name,
-      description: role.description || '',
-      permission_ids: role.permission_ids || [],
-    })
+    setForm({ name: role.name, description: role.description || '', permission_ids: role.permission_ids || [] })
     setShowModal(true)
   }
 
   const togglePermission = (id) => {
     setForm((prev) => ({
       ...prev,
-      permission_ids: prev.permission_ids.includes(id)
-        ? prev.permission_ids.filter((p) => p !== id)
-        : [...prev.permission_ids, id],
+      permission_ids: prev.permission_ids.includes(id) ? prev.permission_ids.filter((p) => p !== id) : [...prev.permission_ids, id],
     }))
   }
 
   const handleSave = async (e) => {
     e.preventDefault()
-    if (!form.name.trim()) {
-      setError('Nome do perfil é obrigatório.')
-      return
-    }
+    if (!form.name.trim()) { setError('Nome do perfil é obrigatório.'); return }
     setSaving(true)
     setError(null)
     try {
       if (editingRole) {
-        await axios.put(`/api/roles/${editingRole.id}`, {
-          description: form.description,
-          permission_ids: form.permission_ids,
-        })
+        await axios.put(`/api/roles/${editingRole.id}`, { description: form.description, permission_ids: form.permission_ids })
         setSuccess('Perfil atualizado com sucesso.')
       } else {
-        await axios.post('/api/roles', {
-          name: form.name.trim(),
-          description: form.description,
-          permission_ids: form.permission_ids,
-        })
+        await axios.post('/api/roles', { name: form.name.trim(), description: form.description, permission_ids: form.permission_ids })
         setSuccess('Perfil criado com sucesso.')
       }
       setShowModal(false)
@@ -125,127 +90,89 @@ const Roles = () => {
     }
   }
 
-  const permissionLabel = (name) => {
-    const labels = {
-      'user.manage': 'Gerenciar usuários',
-      'role.manage': 'Gerenciar perfis',
-      'api_key.manage': 'Gerenciar chaves API',
-      'extract.run': 'Executar extração',
-      'train.run': 'Executar treinamento',
-      'predict.use': 'Usar predição (API)',
-      'usage.view': 'Ver uso e quotas',
-    }
-    return labels[name] || name
-  }
-
   return (
-    <CRow>
-      <CCol xs={12}>
-        <CCard className="mb-4">
-          <CCardHeader className="d-flex justify-content-between align-items-center">
+    <div className="row">
+      <div className="col-12">
+        <div className="card">
+          <div className="card-header d-flex justify-content-between align-items-center">
             <strong>Gestão de Perfis</strong>
-            <CButton color="primary" size="sm" onClick={openCreate}>
-              <CIcon icon={cilPlus} className="me-2" />
-              Novo Perfil
-            </CButton>
-          </CCardHeader>
-          <CCardBody>
-            {error && <CAlert color="danger" dismissible onClose={() => setError(null)}>{error}</CAlert>}
-            {success && <CAlert color="success" dismissible onClose={() => setSuccess(null)}>{success}</CAlert>}
-
+            <button type="button" className="btn btn-primary btn-sm" onClick={openCreate}><i className="fas fa-plus mr-2" /> Novo Perfil</button>
+          </div>
+          <div className="card-body">
+            {error && <div className="alert alert-danger alert-dismissible"><button type="button" className="close" onClick={() => setError(null)}><span>&times;</span></button>{error}</div>}
+            {success && <div className="alert alert-success alert-dismissible"><button type="button" className="close" onClick={() => setSuccess(null)}><span>&times;</span></button>{success}</div>}
             {loading ? (
-              <div className="text-center py-4"><CSpinner /></div>
+              <div className="text-center py-4"><i className="fas fa-spinner fa-spin fa-2x" /></div>
             ) : roles.length === 0 ? (
-              <p className="text-body-secondary">Nenhum perfil cadastrado. Crie um perfil para atribuir a usuários.</p>
+              <p className="text-muted">Nenhum perfil cadastrado.</p>
             ) : (
-              <CTable hover responsive>
-                <CTableHead>
-                  <CTableRow>
-                    <CTableHeaderCell>ID</CTableHeaderCell>
-                    <CTableHeaderCell>Nome</CTableHeaderCell>
-                    <CTableHeaderCell>Descrição</CTableHeaderCell>
-                    <CTableHeaderCell>Permissões</CTableHeaderCell>
-                    <CTableHeaderCell>Ações</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {roles.map((role) => (
-                    <CTableRow key={role.id}>
-                      <CTableDataCell>{role.id}</CTableDataCell>
-                      <CTableDataCell className="fw-semibold">{role.name}</CTableDataCell>
-                      <CTableDataCell>{role.description || '-'}</CTableDataCell>
-                      <CTableDataCell>
-                        {(role.permission_ids || []).map((pid) => {
-                          const p = permissions.find((x) => x.id === pid)
-                          return (
-                            <CBadge key={pid} color="secondary" className="me-1">
-                              {p ? permissionLabel(p.name) : `#${pid}`}
-                            </CBadge>
-                          )
-                        })}
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CButton color="info" size="sm" variant="outline" onClick={() => openEdit(role)}>
-                          <CIcon icon={cilPencil} />
-                        </CButton>
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
-                </CTableBody>
-              </CTable>
-            )}
-          </CCardBody>
-        </CCard>
-      </CCol>
-
-      <CModal visible={showModal} onClose={() => setShowModal(false)} backdrop="static" size="lg">
-        <CModalHeader>
-          <CModalTitle>{editingRole ? 'Editar Perfil' : 'Novo Perfil'}</CModalTitle>
-        </CModalHeader>
-        <CForm onSubmit={handleSave}>
-          <CModalBody>
-            <div className="mb-3">
-              <CFormLabel>Nome</CFormLabel>
-              <CFormInput
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Ex: operador, analista"
-                disabled={!!editingRole}
-                required
-              />
-              {editingRole && <div className="form-text">O nome do perfil não pode ser alterado.</div>}
-            </div>
-            <div className="mb-3">
-              <CFormLabel>Descrição</CFormLabel>
-              <CFormInput
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                placeholder="Descrição opcional"
-              />
-            </div>
-            <div className="mb-3">
-              <CFormLabel>Permissões</CFormLabel>
-              <div className="border rounded p-3 bg-body-tertiary bg-opacity-50">
-                {permissions.map((p) => (
-                  <CFormCheck
-                    key={p.id}
-                    label={permissionLabel(p.name)}
-                    checked={form.permission_ids.includes(p.id)}
-                    onChange={() => togglePermission(p.id)}
-                  />
-                ))}
+              <div className="table-responsive">
+                <table className="table table-hover">
+                  <thead><tr><th>ID</th><th>Nome</th><th>Descrição</th><th>Permissões</th><th>Ações</th></tr></thead>
+                  <tbody>
+                    {roles.map((role) => (
+                      <tr key={role.id}>
+                        <td>{role.id}</td>
+                        <td className="font-weight-bold">{role.name}</td>
+                        <td>{role.description || '-'}</td>
+                        <td>
+                          {(role.permission_ids || []).map((pid) => {
+                            const p = permissions.find((x) => x.id === pid)
+                            return <span key={pid} className="badge badge-secondary mr-1">{p ? permissionLabel(p.name) : `#${pid}`}</span>
+                          })}
+                        </td>
+                        <td><button type="button" className="btn btn-info btn-sm" onClick={() => openEdit(role)}><i className="fas fa-edit" /></button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {showModal && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setShowModal(false)}>
+          <div className="modal-dialog modal-lg modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{editingRole ? 'Editar Perfil' : 'Novo Perfil'}</h5>
+                <button type="button" className="close" onClick={() => setShowModal(false)}><span>&times;</span></button>
+              </div>
+              <form onSubmit={handleSave}>
+                <div className="modal-body">
+                  <div className="form-group">
+                    <label>Nome</label>
+                    <input type="text" className="form-control" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: operador" disabled={!!editingRole} required />
+                    {editingRole && <small className="form-text text-muted">O nome do perfil não pode ser alterado.</small>}
+                  </div>
+                  <div className="form-group">
+                    <label>Descrição</label>
+                    <input type="text" className="form-control" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descrição opcional" />
+                  </div>
+                  <div className="form-group">
+                    <label>Permissões</label>
+                    <div className="border rounded p-3 bg-light">
+                      {permissions.map((p) => (
+                        <div key={p.id} className="custom-control custom-checkbox">
+                          <input type="checkbox" className="custom-control-input" id={`perm-${p.id}`} checked={form.permission_ids.includes(p.id)} onChange={() => togglePermission(p.id)} />
+                          <label className="custom-control-label" htmlFor={`perm-${p.id}`}>{permissionLabel(p.name)}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+                  <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? <i className="fas fa-spinner fa-spin" /> : editingRole ? 'Salvar' : 'Criar'}</button>
+                </div>
+              </form>
             </div>
-          </CModalBody>
-          <CModalFooter>
-            <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>Cancelar</CButton>
-            <CButton color="primary" type="submit" disabled={saving}>
-              {saving ? <CSpinner size="sm" /> : editingRole ? 'Salvar' : 'Criar'}
-            </CButton>
-          </CModalFooter>
-        </CForm>
-      </CModal>
-    </CRow>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -1,39 +1,23 @@
 import React from 'react'
-import {
-  CButton,
-  CCol,
-  CContainer,
-  CFormInput,
-  CInputGroup,
-  CInputGroupText,
-  CRow,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilMagnifyingGlass } from '@coreui/icons'
+import { Link } from 'react-router-dom'
 
 const Page500 = () => {
   return (
-    <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
-      <CContainer>
-        <CRow className="justify-content-center">
-          <CCol md={6}>
-            <span className="clearfix">
-              <h1 className="float-start display-3 me-4">500</h1>
-              <h4 className="pt-3">Houston, we have a problem!</h4>
-              <p className="text-body-secondary float-start">
-                The page you are looking for is temporarily unavailable.
-              </p>
-            </span>
-            <CInputGroup className="input-prepend">
-              <CInputGroupText>
-                <CIcon icon={cilMagnifyingGlass} />
-              </CInputGroupText>
-              <CFormInput type="text" placeholder="What are you looking for?" />
-              <CButton color="info">Search</CButton>
-            </CInputGroup>
-          </CCol>
-        </CRow>
-      </CContainer>
+    <div className="content-wrapper" style={{ minHeight: 'auto' }}>
+      <section className="content">
+        <div className="container-fluid">
+          <div className="row justify-content-center">
+            <div className="col-md-6">
+              <div className="clearfix">
+                <h1 className="float-left display-4 mr-4">500</h1>
+                <h4 className="pt-3">Erro interno do servidor</h4>
+                <p className="text-muted">Algo deu errado. Tente novamente mais tarde.</p>
+              </div>
+              <p><Link to="/#/dashboard" className="btn btn-primary">Voltar ao Início</Link></p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

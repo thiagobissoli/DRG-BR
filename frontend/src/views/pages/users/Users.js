@@ -1,33 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import {
-  CCard,
-  CCardBody,
-  CCardHeader,
-  CCol,
-  CRow,
-  CTable,
-  CTableBody,
-  CTableDataCell,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
-  CButton,
-  CSpinner,
-  CAlert,
-  CBadge,
-  CModal,
-  CModalHeader,
-  CModalTitle,
-  CModalBody,
-  CModalFooter,
-  CForm,
-  CFormInput,
-  CFormLabel,
-  CFormCheck,
-  CFormSelect,
-} from '@coreui/react'
-import CIcon from '@coreui/icons-react'
-import { cilPlus, cilPencil, cilTrash } from '@coreui/icons'
 import axios from 'axios'
 
 const emptyForm = { email: '', name: '', password: '', active: true, role_ids: [] }
@@ -38,7 +9,6 @@ const Users = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
-
   const [showModal, setShowModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
@@ -46,9 +16,7 @@ const Users = () => {
   const [form, setForm] = useState({ ...emptyForm })
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  useEffect(() => { loadData() }, [])
 
   const loadData = async () => {
     setLoading(true)
@@ -93,7 +61,6 @@ const Users = () => {
     e.preventDefault()
     setSaving(true)
     setError(null)
-
     try {
       if (editingUser) {
         const payload = { name: form.name, active: form.active, role_ids: form.role_ids }
@@ -106,12 +73,7 @@ const Users = () => {
           setSaving(false)
           return
         }
-        await axios.post('/api/users', {
-          email: form.email,
-          name: form.name,
-          password: form.password,
-          role_ids: form.role_ids,
-        })
+        await axios.post('/api/users', { email: form.email, name: form.name, password: form.password, role_ids: form.role_ids })
         setSuccess('Usuário criado com sucesso.')
       }
       setShowModal(false)
@@ -140,191 +102,143 @@ const Users = () => {
   const toggleRole = (roleId) => {
     setForm((prev) => ({
       ...prev,
-      role_ids: prev.role_ids.includes(roleId)
-        ? prev.role_ids.filter((id) => id !== roleId)
-        : [...prev.role_ids, roleId],
+      role_ids: prev.role_ids.includes(roleId) ? prev.role_ids.filter((id) => id !== roleId) : [...prev.role_ids, roleId],
     }))
   }
 
-  const clearMessages = () => {
-    setTimeout(() => {
-      setSuccess(null)
-      setError(null)
-    }, 4000)
-  }
-
   useEffect(() => {
-    if (success || error) clearMessages()
+    if (success || error) {
+      const t = setTimeout(() => { setSuccess(null); setError(null) }, 4000)
+      return () => clearTimeout(t)
+    }
   }, [success, error])
 
   return (
-    <CRow>
-      <CCol xs={12}>
-        <CCard className="mb-4">
-          <CCardHeader className="d-flex justify-content-between align-items-center">
+    <div className="row">
+      <div className="col-12">
+        <div className="card">
+          <div className="card-header d-flex justify-content-between align-items-center">
             <strong>Usuários</strong>
-            <CButton color="primary" size="sm" onClick={openCreate}>
-              <CIcon icon={cilPlus} className="me-2" />
-              Novo Usuário
-            </CButton>
-          </CCardHeader>
-          <CCardBody>
-            {error && <CAlert color="danger" dismissible onClose={() => setError(null)}>{error}</CAlert>}
-            {success && <CAlert color="success" dismissible onClose={() => setSuccess(null)}>{success}</CAlert>}
-
+            <button type="button" className="btn btn-primary btn-sm" onClick={openCreate}>
+              <i className="fas fa-plus mr-2" /> Novo Usuário
+            </button>
+          </div>
+          <div className="card-body">
+            {error && <div className="alert alert-danger alert-dismissible"><button type="button" className="close" onClick={() => setError(null)}><span>&times;</span></button>{error}</div>}
+            {success && <div className="alert alert-success alert-dismissible"><button type="button" className="close" onClick={() => setSuccess(null)}><span>&times;</span></button>{success}</div>}
             {loading ? (
-              <div className="text-center py-4">
-                <CSpinner />
-              </div>
+              <div className="text-center py-4"><i className="fas fa-spinner fa-spin fa-2x" /></div>
             ) : users.length === 0 ? (
-              <p className="text-body-secondary">Nenhum usuário encontrado.</p>
+              <p className="text-muted">Nenhum usuário encontrado.</p>
             ) : (
-              <CTable hover responsive>
-                <CTableHead>
-                  <CTableRow>
-                    <CTableHeaderCell>ID</CTableHeaderCell>
-                    <CTableHeaderCell>Email</CTableHeaderCell>
-                    <CTableHeaderCell>Nome</CTableHeaderCell>
-                    <CTableHeaderCell>Status</CTableHeaderCell>
-                    <CTableHeaderCell>Perfis</CTableHeaderCell>
-                    <CTableHeaderCell>Criado em</CTableHeaderCell>
-                    <CTableHeaderCell>Ações</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {users.map((user) => (
-                    <CTableRow key={user.id}>
-                      <CTableDataCell>{user.id}</CTableDataCell>
-                      <CTableDataCell>{user.email}</CTableDataCell>
-                      <CTableDataCell>{user.name || '-'}</CTableDataCell>
-                      <CTableDataCell>
-                        <CBadge color={user.active ? 'success' : 'danger'}>
-                          {user.active ? 'Ativo' : 'Inativo'}
-                        </CBadge>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        {(user.role_ids || []).map((rid) => {
-                          const role = roles.find((r) => r.id === rid)
-                          return (
-                            <CBadge key={rid} color="primary" className="me-1">
-                              {role?.name || `#${rid}`}
-                            </CBadge>
-                          )
-                        })}
-                      </CTableDataCell>
-                      <CTableDataCell className="small">
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : '-'}
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CButton color="info" size="sm" variant="outline" className="me-2" onClick={() => openEdit(user)}>
-                          <CIcon icon={cilPencil} />
-                        </CButton>
-                        <CButton color="danger" size="sm" variant="outline" onClick={() => openDelete(user)}>
-                          <CIcon icon={cilTrash} />
-                        </CButton>
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
-                </CTableBody>
-              </CTable>
+              <div className="table-responsive">
+                <table className="table table-hover">
+                  <thead>
+                    <tr><th>ID</th><th>Email</th><th>Nome</th><th>Status</th><th>Perfis</th><th>Criado em</th><th>Ações</th></tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => (
+                      <tr key={user.id}>
+                        <td>{user.id}</td>
+                        <td>{user.email}</td>
+                        <td>{user.name || '-'}</td>
+                        <td><span className={`badge badge-${user.active ? 'success' : 'danger'}`}>{user.active ? 'Ativo' : 'Inativo'}</span></td>
+                        <td>
+                          {(user.role_ids || []).map((rid) => {
+                            const role = roles.find((r) => r.id === rid)
+                            return <span key={rid} className="badge badge-primary mr-1">{role?.name || `#${rid}`}</span>
+                          })}
+                        </td>
+                        <td className="small">{user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : '-'}</td>
+                        <td>
+                          <button type="button" className="btn btn-info btn-sm mr-2" onClick={() => openEdit(user)}><i className="fas fa-edit" /></button>
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => openDelete(user)}><i className="fas fa-trash" /></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </CCardBody>
-        </CCard>
-      </CCol>
+          </div>
+        </div>
+      </div>
 
       {/* Modal Criar/Editar */}
-      <CModal visible={showModal} onClose={() => setShowModal(false)} backdrop="static">
-        <CModalHeader>
-          <CModalTitle>{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</CModalTitle>
-        </CModalHeader>
-        <CForm onSubmit={handleSave}>
-          <CModalBody>
-            <div className="mb-3">
-              <CFormLabel>Email</CFormLabel>
-              <CFormInput
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                disabled={!!editingUser}
-                required={!editingUser}
-                placeholder="usuario@email.com"
-              />
-            </div>
-            <div className="mb-3">
-              <CFormLabel>Nome</CFormLabel>
-              <CFormInput
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Nome completo"
-              />
-            </div>
-            <div className="mb-3">
-              <CFormLabel>
-                Senha {editingUser && <small className="text-body-secondary">(deixe em branco para manter)</small>}
-              </CFormLabel>
-              <CFormInput
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required={!editingUser}
-                minLength={6}
-                placeholder="Mínimo 6 caracteres"
-              />
-            </div>
-            {editingUser && (
-              <div className="mb-3">
-                <CFormCheck
-                  label="Usuário ativo"
-                  checked={form.active}
-                  onChange={(e) => setForm({ ...form, active: e.target.checked })}
-                />
+      {showModal && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setShowModal(false)}>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">{editingUser ? 'Editar Usuário' : 'Novo Usuário'}</h5>
+                <button type="button" className="close" onClick={() => setShowModal(false)}><span>&times;</span></button>
               </div>
-            )}
-            {roles.length > 0 && (
-              <div className="mb-3">
-                <CFormLabel>Perfis</CFormLabel>
-                {roles.map((role) => (
-                  <CFormCheck
-                    key={role.id}
-                    label={`${role.name}${role.description ? ` — ${role.description}` : ''}`}
-                    checked={form.role_ids.includes(role.id)}
-                    onChange={() => toggleRole(role.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </CModalBody>
-          <CModalFooter>
-            <CButton color="secondary" variant="outline" onClick={() => setShowModal(false)}>
-              Cancelar
-            </CButton>
-            <CButton color="primary" type="submit" disabled={saving}>
-              {saving ? <CSpinner size="sm" /> : editingUser ? 'Salvar' : 'Criar'}
-            </CButton>
-          </CModalFooter>
-        </CForm>
-      </CModal>
+              <form onSubmit={handleSave}>
+                <div className="modal-body">
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input type="email" className="form-control" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} disabled={!!editingUser} required={!editingUser} placeholder="usuario@email.com" />
+                  </div>
+                  <div className="form-group">
+                    <label>Nome</label>
+                    <input type="text" className="form-control" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nome completo" />
+                  </div>
+                  <div className="form-group">
+                    <label>Senha {editingUser && <small className="text-muted">(deixe em branco para manter)</small>}</label>
+                    <input type="password" className="form-control" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required={!editingUser} minLength={6} placeholder="Mínimo 6 caracteres" />
+                  </div>
+                  {editingUser && (
+                    <div className="form-group">
+                      <div className="custom-control custom-checkbox">
+                        <input type="checkbox" className="custom-control-input" id="userActive" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
+                        <label className="custom-control-label" htmlFor="userActive">Usuário ativo</label>
+                      </div>
+                    </div>
+                  )}
+                  {roles.length > 0 && (
+                    <div className="form-group">
+                      <label>Perfis</label>
+                      {roles.map((role) => (
+                        <div key={role.id} className="custom-control custom-checkbox">
+                          <input type="checkbox" className="custom-control-input" id={`role-${role.id}`} checked={form.role_ids.includes(role.id)} onChange={() => toggleRole(role.id)} />
+                          <label className="custom-control-label" htmlFor={`role-${role.id}`}>{role.name}{role.description ? ` — ${role.description}` : ''}</label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+                  <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? <i className="fas fa-spinner fa-spin" /> : editingUser ? 'Salvar' : 'Criar'}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Modal Confirmar Exclusão */}
-      <CModal visible={showDeleteModal} onClose={() => setShowDeleteModal(false)}>
-        <CModalHeader>
-          <CModalTitle>Confirmar Exclusão</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          Tem certeza que deseja excluir o usuário <strong>{deletingUser?.email}</strong>?
-          <br />
-          <small className="text-danger">Esta ação não pode ser desfeita.</small>
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" variant="outline" onClick={() => setShowDeleteModal(false)}>
-            Cancelar
-          </CButton>
-          <CButton color="danger" onClick={handleDelete} disabled={saving}>
-            {saving ? <CSpinner size="sm" /> : 'Excluir'}
-          </CButton>
-        </CModalFooter>
-      </CModal>
-    </CRow>
+      {/* Modal Excluir */}
+      {showDeleteModal && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} onClick={() => setShowDeleteModal(false)}>
+          <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Confirmar Exclusão</h5>
+                <button type="button" className="close" onClick={() => setShowDeleteModal(false)}><span>&times;</span></button>
+              </div>
+              <div className="modal-body">
+                Tem certeza que deseja excluir o usuário <strong>{deletingUser?.email}</strong>?
+                <br /><small className="text-danger">Esta ação não pode ser desfeita.</small>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancelar</button>
+                <button type="button" className="btn btn-danger" onClick={handleDelete} disabled={saving}>{saving ? <i className="fas fa-spinner fa-spin" /> : 'Excluir'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

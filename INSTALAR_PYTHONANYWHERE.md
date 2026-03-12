@@ -32,14 +32,19 @@ Envie o projeto (zip ou arquivos) pela aba **Files** e extraia em algo como `/ho
 
 ## 3. Virtualenv e dependências
 
+Use **Python 3.11** (no PythonAnywhere, escolha a versão 3.11.x, ex.: 3.11.9).
+
 No Bash (ajuste `seu_usuario` e o caminho do projeto):
 
 ```bash
 cd /home/seu_usuario/DRG-BR
 
-# Criar virtualenv (Python 3.10 recomendado)
-python3.10 -m venv venv
+# Criar virtualenv com Python 3.11 (ex.: 3.11.9)
+python3.11 -m venv venv
 source venv/bin/activate
+
+# Confirmar versão (deve ser 3.11.x)
+python --version
 
 # Instalar dependências (torch e lightgbm podem demorar)
 pip install --upgrade pip
@@ -56,7 +61,7 @@ pip install -r requirements.txt
 
 Na aba **Web** do PythonAnywhere:
 
-1. Clique no seu **Web app** (ou crie um: **Add a new web app** > **Flask** > Python 3.10).
+1. Clique no seu **Web app** (ou crie um: **Add a new web app** > **Flask** > **Python 3.11**).
 2. Em **Code**:
    - **Source code**: `/home/seu_usuario/DRG-BR`
    - **Working directory**: `/home/seu_usuario/DRG-BR`
@@ -167,8 +172,9 @@ with app.app_context():
 
 ## 9. Resumo de caminhos no PythonAnywhere
 
-| Item | Caminho |
-|------|--------|
+| Item | Caminho / valor |
+|------|-----------------|
+| **Python** | **3.11** (ex.: 3.11.9 — use `python3.11` no venv e escolha Python 3.11 ao criar a Web app) |
 | Projeto | `/home/seu_usuario/DRG-BR` |
 | Virtualenv | `/home/seu_usuario/DRG-BR/venv` |
 | WSGI | Apontar para `.../DRG-BR/wsgi.py` ou colar o conteúdo no arquivo WSGI da Web app |
