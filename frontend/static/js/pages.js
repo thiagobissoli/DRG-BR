@@ -1405,6 +1405,9 @@ window.DRG_PAGES = (function () {
       '<div class="form-group"><label class="font-weight-bold">DRG_CACHE_DIR</label><input type="text" class="form-control" id="install-drg-cache-dir" placeholder="data/cache"></div>' +
       '<div class="form-group"><label class="font-weight-bold">CORS_ORIGINS</label><input type="text" class="form-control" id="install-cors-origins" placeholder="* ou https://seudominio.com" value="*"></div>' +
       '<div class="form-group"><label class="font-weight-bold">FLASK_ENV</label><select class="form-control" id="install-flask-env"><option value="production">production</option><option value="development">development</option></select></div>' +
+      '<hr><h6 class="font-weight-bold">Primeiro usuário administrador</h6>' +
+      '<div class="form-group"><label class="font-weight-bold">Email do admin</label><input type="email" class="form-control" id="install-admin-email" placeholder="admin@drgbr.local" value="admin@drgbr.local"></div>' +
+      '<div class="form-group"><label class="font-weight-bold">Senha do admin</label><input type="password" class="form-control" id="install-admin-password" placeholder="Mín. 6 caracteres (vazio = admin123)" autocomplete="new-password"></div>' +
       '<button type="button" class="btn btn-primary btn-block btn-lg" id="install-submit"><i class="fas fa-download mr-1"></i> Instalar sistema</button>' +
       '</div>' +
       '<div id="install-success-wrap" style="display:none;"></div>';
@@ -1419,6 +1422,11 @@ window.DRG_PAGES = (function () {
         errEl.innerHTML = '<div class="alert alert-danger">Informe o DATABASE_URL.</div>';
         return;
       }
+      var adminPassword = (container.querySelector('#install-admin-password').value || '').trim();
+      if (adminPassword && adminPassword.length < 6) {
+        errEl.innerHTML = '<div class="alert alert-danger">A senha do admin deve ter no mínimo 6 caracteres.</div>';
+        return;
+      }
       var payload = {
         database_url: database_url,
         secret_key: (container.querySelector('#install-secret-key').value || '').trim(),
@@ -1427,7 +1435,9 @@ window.DRG_PAGES = (function () {
         drg_model_dir: (container.querySelector('#install-drg-model-dir').value || '').trim(),
         drg_cache_dir: (container.querySelector('#install-drg-cache-dir').value || '').trim(),
         cors_origins: (container.querySelector('#install-cors-origins').value || '').trim(),
-        flask_env: (container.querySelector('#install-flask-env').value || '').trim()
+        flask_env: (container.querySelector('#install-flask-env').value || '').trim(),
+        admin_email: (container.querySelector('#install-admin-email').value || '').trim().toLowerCase(),
+        admin_password: adminPassword
       };
       container.querySelector('#install-submit').disabled = true;
       container.querySelector('#install-submit').innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Instalando...';
@@ -1439,6 +1449,7 @@ window.DRG_PAGES = (function () {
         if (res.ok) {
           if (formWrap) formWrap.style.display = 'none';
           if (successWrap) {
+            var emailUsed = (res.data.admin_email || 'admin@drgbr.local');
             successWrap.style.display = 'block';
             successWrap.innerHTML =
               '<div class="text-center py-2"><i class="fas fa-check-circle fa-3x text-success mb-2"></i></div>' +
@@ -1448,8 +1459,8 @@ window.DRG_PAGES = (function () {
               '<strong>Próximos passos:</strong><br>' +
               '1. Reinicie o servidor da aplicação.<br>' +
               '2. Acesse novamente esta URL.<br>' +
-              '3. Faça login com: <code>admin@drgbr.local</code> / <code>admin123</code><br>' +
-              '<span class="text-muted">Altere a senha do administrador após o primeiro acesso.</span>' +
+              '3. Faça login com: <code>' + esc(emailUsed) + '</code> e a senha que você definiu.<br>' +
+              '<span class="text-muted">Se não informou senha, use admin123.</span>' +
               '</div>';
           }
         } else {

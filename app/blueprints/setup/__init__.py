@@ -63,6 +63,16 @@ def run_setup():
     except Exception as e:
         return jsonify({"error": f"Não foi possível gravar o .env: {e}"}), 500
 
+    admin_email = (data.get("admin_email") or "").strip().lower()
+    admin_password = (data.get("admin_password") or "").strip()
+    subprocess_env = {**os.environ, "DATABASE_URL": database_url}
+    if admin_email:
+        subprocess_env["INSTALL_ADMIN_EMAIL"] = admin_email
+    if admin_password:
+        if len(admin_password) < 6:
+            return jsonify({"error": "A senha do admin deve ter no mínimo 6 caracteres"}), 400
+        subprocess_env["INSTALL_ADMIN_PASSWORD"] = admin_password
+
     root = env_file.parent
     try:
         result = subprocess.run(
@@ -71,7 +81,7 @@ def run_setup():
             capture_output=True,
             text=True,
             timeout=120,
-            env={**os.environ, "DATABASE_URL": database_url},
+            env=subprocess_env,
         )
         if result.returncode != 0:
             return jsonify({
@@ -86,6 +96,7 @@ def run_setup():
     return jsonify({
         "message": "Instalação concluída. Reinicie o servidor da aplicação para continuar.",
         "restart_required": True,
+        "admin_email": admin_email or "admin@drgbr.local",
     }), 200
 
 

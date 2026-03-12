@@ -27,8 +27,12 @@ def seed_if_empty():
         db.session.add(admin)
         db.session.commit()
         if User.query.first() is None:
-            user = User(email="admin@drgbr.local", name="Admin")
-            user.set_password("admin123")
+            admin_email = (os.environ.get("INSTALL_ADMIN_EMAIL") or "").strip().lower() or "admin@drgbr.local"
+            admin_password = (os.environ.get("INSTALL_ADMIN_PASSWORD") or "").strip() or "admin123"
+            if len(admin_password) < 6:
+                admin_password = "admin123"
+            user = User(email=admin_email, name="Admin")
+            user.set_password(admin_password)
             user.roles = [admin]
             db.session.add(user)
             db.session.commit()

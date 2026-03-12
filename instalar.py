@@ -11,7 +11,8 @@ Uso:
 Variáveis de ambiente (modo não interativo):
   INSTALL_DATABASE_URL, INSTALL_SECRET_KEY, INSTALL_JWT_SECRET_KEY,
   INSTALL_DRG_DB_PATH, INSTALL_DRG_MODEL_DIR, INSTALL_DRG_CACHE_DIR,
-  INSTALL_CORS_ORIGINS, INSTALL_FLASK_ENV
+  INSTALL_CORS_ORIGINS, INSTALL_FLASK_ENV,
+  INSTALL_ADMIN_EMAIL, INSTALL_ADMIN_PASSWORD
 """
 import os
 import re
@@ -143,6 +144,8 @@ def main():
         drg_cache_dir = os.environ.get("INSTALL_DRG_CACHE_DIR", str(ROOT / "data" / "cache"))
         cors_origins = os.environ.get("INSTALL_CORS_ORIGINS", "*")
         flask_env = os.environ.get("INSTALL_FLASK_ENV", "production")
+        admin_email = os.environ.get("INSTALL_ADMIN_EMAIL", "").strip().lower() or "admin@drgbr.local"
+        admin_password = os.environ.get("INSTALL_ADMIN_PASSWORD", "").strip() or "admin123"
     else:
         print("  Configure a conexão com o banco de dados e as chaves de segurança.")
         print()
@@ -157,6 +160,13 @@ def main():
         drg_cache_dir = input(f"  DRG_CACHE_DIR [{ROOT / 'data' / 'cache'}]: ").strip() or str(ROOT / "data" / "cache")
         cors_origins = input("  CORS_ORIGINS [*]: ").strip() or "*"
         flask_env = input("  FLASK_ENV [production]: ").strip() or "production"
+        print()
+        print("  Primeiro usuário administrador:")
+        admin_email = input("  Email do admin [admin@drgbr.local]: ").strip().lower() or "admin@drgbr.local"
+        admin_password = input("  Senha do admin [admin123] (mín. 6 caracteres): ").strip() or "admin123"
+        if len(admin_password) < 6:
+            admin_password = "admin123"
+            print("    Senha muito curta; usando admin123. Altere após o primeiro acesso.")
 
     config = {
         "DATABASE_URL": database_url,
@@ -168,6 +178,8 @@ def main():
         "CORS_ORIGINS": cors_origins,
         "FLASK_ENV": flask_env,
     }
+    os.environ["INSTALL_ADMIN_EMAIL"] = admin_email
+    os.environ["INSTALL_ADMIN_PASSWORD"] = admin_password
 
     print()
     print("  Criando banco de dados (se for MySQL)...")
@@ -183,9 +195,8 @@ def main():
     print("  Próximos passos:")
     print("    1. Inicie o servidor:  python run.py")
     print("    2. Acesse no navegador: http://127.0.0.1:5001")
-    print("    3. Login padrão: admin@drgbr.local / admin123")
+    print(f"    3. Login: {admin_email} / (a senha que você definiu)")
     print()
-    print("  Altere a senha do admin após o primeiro acesso.")
     print()
     return 0
 
