@@ -1,0 +1,46 @@
+# DRG-BR — arquivos ignorados pelo Git
+
+# Ambiente e segredos
+.env
+.env.local
+.env.*.local
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Dados e modelos (gerados localmente)
+data/*.db
+data/cache/
+*.db
+models/*
+!models/.gitkeep
+
+# IDE / SO
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Frontend (node e build; detalhes em frontend/.gitignore)
+frontend/node_modules/
+frontend/build/
+frontend/.git.bak/
+
+# Logs e temporários
+*.log
+*.pid
+.pytest_cache/
+.coverage
+htmlcov/
