@@ -28,8 +28,7 @@ window.DRG_PAGES = (function () {
         '  <div class="input-group mb-3"><input type="password" class="form-control" id="login-password" placeholder="Senha" required />' +
         '  <div class="input-group-append"><div class="input-group-text"><span class="fas fa-lock"></span></div></div></div>' +
         '  <div class="row"><div class="col-12"><button type="submit" class="btn btn-primary btn-block" id="login-btn">Entrar</button></div></div>' +
-        '</form>' +
-        '<p class="mb-0 mt-3"><a href="#/register" class="text-center">Registrar nova conta</a></p>';
+        '</form>';
       container.querySelector('#login-form').addEventListener('submit', function (e) {
         e.preventDefault();
         var email = document.getElementById('login-email').value.trim();
@@ -1136,7 +1135,7 @@ window.DRG_PAGES = (function () {
       container.innerHTML =
         '<div id="predict-alert"></div>' +
 
-        '<div class="card mb-4"><div class="card-header"><i class="fas fa-cube mr-2"></i><strong>Modelos disponíveis</strong></div><div class="card-body">' +
+        '<div class="card mb-4"><div class="card-header"><i class="fas fa-cube mr-2"></i><strong>Modelos disponíveis</strong><a href="#/api-docs" class="btn btn-sm btn-outline-secondary ml-2"><i class="fas fa-book mr-1"></i>Documentação da API</a></div><div class="card-body">' +
         '<p class="text-muted small mb-2">O modelo marcado como padrão é usado quando nenhum modelo é escolhido na predição.</p>' +
         '<div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>ID</th><th>Nome</th><th>Padrão</th><th>Caminho</th><th>Criado</th></tr></thead><tbody id="predict-models-tbody">' +
         (models.length ? models.map(function (m) {
@@ -1240,6 +1239,92 @@ window.DRG_PAGES = (function () {
     }).catch(function () {
       container.innerHTML = '<div class="alert alert-danger">Erro ao carregar modelos. Verifique se há modelos treinados e tente novamente.</div>';
     });
+  }
+
+  function apiDocs(container) {
+    var baseUrl = typeof window.DRG_BASE_URL !== 'undefined' && window.DRG_BASE_URL ? window.DRG_BASE_URL : (window.location.origin || '');
+    container.innerHTML =
+      '<div class="card mb-4">' +
+      '  <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="fas fa-book mr-2"></i>Documentação da API de Predição</h5></div>' +
+      '  <div class="card-body">' +
+      '    <p class="lead">A API de predição DRG-BR permite obter estimativas de permanência (LOS), custos e probabilidades clínicas a partir de CID principal, CIDs secundários, procedimento e dados demográficos.</p>' +
+      '    <p><strong>Base URL:</strong> <code>' + esc(baseUrl) + '</code></p>' +
+      '    <p class="text-muted small mb-0">As rotas da API de predição estão sob o prefixo <code>/api/v1</code>.</p>' +
+      '  </div>' +
+      '</div>' +
+
+      '<div class="card mb-4">' +
+      '  <div class="card-header"><i class="fas fa-key mr-2"></i>Autenticação</div>' +
+      '  <div class="card-body">' +
+      '    <p><strong>Listar modelos</strong> (<code>GET /api/v1/models</code>) não exige autenticação.</p>' +
+      '    <p><strong>Predição</strong> (<code>POST /api/v1/predict</code>) exige chave API:</p>' +
+      '    <ul class="mb-0">' +
+      '      <li>Envie no header: <code>X-API-Key: sua-chave-api</code></li>' +
+      '      <li>Ou no corpo JSON: <code>"api_key": "sua-chave-api"</code></li>' +
+      '    </ul>' +
+      '    <p class="mt-2 small text-muted">Chaves API são criadas em <strong>Chaves API</strong> no menu. A cota (requests/dia) pode ser configurada por chave; se excedida, a API retorna <code>429</code>.</p>' +
+      '  </div>' +
+      '</div>' +
+
+      '<div class="card mb-4">' +
+      '  <div class="card-header"><i class="fas fa-list mr-2"></i>GET /api/v1/models</div>' +
+      '  <div class="card-body">' +
+      '    <p>Lista os modelos treinados disponíveis para predição. Não requer autenticação.</p>' +
+      '    <p><strong>Resposta 200</strong> — array de objetos:</p>' +
+      '    <pre class="bg-light p-3 rounded small">[\n  {\n    "id": 1,\n    "name": "Modelo principal",\n    "path": "models",\n    "is_default": true,\n    "created_at": "2024-01-15T12:00:00"\n  }\n]</pre>' +
+      '    <table class="table table-sm table-bordered"><thead><tr><th>Campo</th><th>Descrição</th></tr></thead><tbody>' +
+      '    <tr><td><code>id</code></td><td>ID do modelo (use em <code>model_id</code> na predição)</td></tr>' +
+      '    <tr><td><code>name</code></td><td>Nome do modelo</td></tr>' +
+      '    <tr><td><code>path</code></td><td>Caminho no servidor</td></tr>' +
+      '    <tr><td><code>is_default</code></td><td>Se é o modelo padrão quando nenhum é informado</td></tr>' +
+      '    <tr><td><code>created_at</code></td><td>Data de criação (ISO 8601)</td></tr>' +
+      '    </tbody></table>' +
+      '  </div>' +
+      '</div>' +
+
+      '<div class="card mb-4">' +
+      '  <div class="card-header"><i class="fas fa-calculator mr-2"></i>POST /api/v1/predict</div>' +
+      '  <div class="card-body">' +
+      '    <p>Executa uma predição. Requer <code>X-API-Key</code> (ou <code>api_key</code> no body).</p>' +
+      '    <p><strong>Corpo (JSON):</strong></p>' +
+      '    <pre class="bg-light p-3 rounded small">{\n  "model_id": 1,           // opcional; ou "model_name"\n  "model_name": "Meu modelo", // opcional\n  "cid_principal": "J189",   // obrigatório (CID-10, com ou sem ponto)\n  "cids_secundarios": ["N183","E119"], // opcional, array de strings\n  "procedimento_sigtap": "0301010079", // opcional\n  "idade": 50,               // opcional, padrão 50\n  "sexo": 0,                 // 0=indefinido, 1=masculino, 2=feminino\n  "urgencia": 1              // 0=eletivo, 1=urgência\n}</pre>' +
+      '    <p><strong>Parâmetros (também aceitos via query string):</strong> <code>model_id</code>, <code>model_name</code>.</p>' +
+      '    <p><strong>Resposta 200</strong> — objeto com predições e agrupamento DRG:</p>' +
+      '    <pre class="bg-light p-3 rounded small">{\n  "drg_br_code": "...",\n  "mdc": "...",\n  "mdc_title": "...",\n  "is_surgical": false,\n  "severity": 2,\n  "cc_mcc_summary": { "has_cc": true, "has_mcc": false, "n_complications": 1 },\n  "los_aritmetico": 5.2,\n  "los_uti_aritmetico": 0.8,\n  "custo_sus": 4160.00,\n  "custo_suplementar": 13000.00,\n  "prob_evento_adverso": 0.12,\n  "prob_intervencao_uti": 0.08,\n  "prob_obito": 0.02\n}</pre>' +
+      '    <table class="table table-sm table-bordered mt-2"><thead><tr><th>Campo</th><th>Descrição</th></tr></thead><tbody>' +
+      '    <tr><td><code>drg_br_code</code></td><td>Código do grupo DRG-BR</td></tr>' +
+      '    <tr><td><code>mdc</code> / <code>mdc_title</code></td><td>MDC e título (Major Diagnostic Category)</td></tr>' +
+      '    <tr><td><code>is_surgical</code></td><td>Se o grupo é cirúrgico</td></tr>' +
+      '    <tr><td><code>severity</code></td><td>Nível de severidade (0–4)</td></tr>' +
+      '    <tr><td><code>cc_mcc_summary</code></td><td>Resumo CC/MCC: has_cc, has_mcc, n_complications</td></tr>' +
+      '    <tr><td><code>los_aritmetico</code></td><td>Estimativa de permanência em dias</td></tr>' +
+      '    <tr><td><code>los_uti_aritmetico</code></td><td>Estimativa de dias em UTI</td></tr>' +
+      '    <tr><td><code>custo_sus</code> / <code>custo_suplementar</code></td><td>Estimativas de custo (R$)</td></tr>' +
+      '    <tr><td><code>prob_obito</code>, <code>prob_evento_adverso</code>, <code>prob_intervencao_uti</code></td><td>Probabilidades (0–1)</td></tr>' +
+      '    </tbody></table>' +
+      '    <p><strong>Códigos de erro:</strong></p>' +
+      '    <ul class="mb-0">' +
+      '      <li><code>401</code> — <code>X-API-Key header required</code></li>' +
+      '      <li><code>403</code> — <code>Invalid API key</code></li>' +
+      '      <li><code>429</code> — <code>Quota exceeded (requests per day)</code></li>' +
+      '      <li><code>500</code> — Erro interno (mensagem em <code>error</code>)</li>' +
+      '    </ul>' +
+      '  </div>' +
+      '</div>' +
+
+      '<div class="card mb-4">' +
+      '  <div class="card-header"><i class="fas fa-terminal mr-2"></i>Exemplo com cURL</div>' +
+      '  <div class="card-body">' +
+      '    <pre class="bg-dark text-light p-3 rounded small mb-0">curl -X POST "' + esc(baseUrl) + '/api/v1/predict" \\\n  -H "Content-Type: application/json" \\\n  -H "X-API-Key: SUA_CHAVE_API" \\\n  -d \'{"cid_principal":"J189","idade":65,"sexo":1,"urgencia":1}\'</pre>' +
+      '  </div>' +
+      '</div>' +
+
+      '<div class="card mb-4">' +
+      '  <div class="card-header"><i class="fas fa-code mr-2"></i>Exemplo em JavaScript (fetch)</div>' +
+      '  <div class="card-body">' +
+      '    <pre class="bg-light p-3 rounded small mb-0">fetch("' + esc(baseUrl) + '/api/v1/predict", {\n  method: "POST",\n  headers: { "Content-Type": "application/json", "X-API-Key": "SUA_CHAVE_API" },\n  body: JSON.stringify({\n    cid_principal: "J189",\n    cids_secundarios: ["N183"],\n    idade: 65,\n    sexo: 1,\n    urgencia: 1\n  })\n})\n.then(r => r.json())\n.then(data => console.log(data));</pre>' +
+      '  </div>' +
+      '</div>';
   }
 
   function profile(container) {
@@ -1566,6 +1651,7 @@ window.DRG_PAGES = (function () {
     extraction: extraction,
     training: training,
     prediction: prediction,
+    apiDocs: apiDocs,
     profile: profile,
     settings: settings,
     page404: page404,
