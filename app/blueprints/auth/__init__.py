@@ -170,3 +170,33 @@ def me():
         "permissions": perms,
         "otp_enabled": bool(user.otp_enabled),
     })
+
+
+@bp.route("/me", methods=["PUT"])
+@jwt_required()
+def update_me():
+    """Permite ao usuário logado atualizar próprio nome e/ou senha."""
+    uid = get_jwt_identity()
+    user = User.query.get(int(uid))
+    if not user or not user.active:
+        return jsonify({"error": "Unauthorized"}), 401
+    data = request.get_json() or {}
+    if "name" in data:
+        user.name = (data["name"] or "").strip() or None
+    if "password" in data and data["password"]:
+        current_password = (data.get("current_password") or "").strip()
+        if not current_password:
+            return jsonify({"error": "current_password obrigatório para alterar senha"}), 400
+        if not user.check_password(current_password):
+            return jsonify({"error": "Senha atual incorreta"}), 401
+        new_password = (data["password"] or "").strip()
+        if len(new_password) < 6:
+            return jsonify({"error": "Nova senha deve ter no mínimo 6 caracteres"}), 400
+        user.set_password(new_password)
+    db.session.commit()
+    return jsonify({
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "message": "Perfil atualizado.",
+    })

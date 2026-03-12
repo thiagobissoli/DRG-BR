@@ -1,6 +1,7 @@
 """
 Configuration from environment (.env).
 Produção: defina SECRET_KEY, JWT_SECRET_KEY, DATABASE_URL e CORS_ORIGINS.
+Se DATABASE_URL estiver vazio ou ausente, o sistema entra em modo instalação (sem login).
 """
 import os
 from pathlib import Path
@@ -12,6 +13,10 @@ load_dotenv()
 ROOT = Path(__file__).resolve().parent.parent
 IS_PRODUCTION = os.environ.get("FLASK_ENV", "production") == "production"
 
+# Modo instalação: quando DATABASE_URL não está definido (ou é placeholder)
+_DATABASE_URL_RAW = (os.environ.get("DATABASE_URL") or "").strip()
+NEEDS_SETUP = not _DATABASE_URL_RAW or _DATABASE_URL_RAW.lower() in ("", "not_configured", "not configured")
+
 
 class Config:
     FLASK_ENV = os.environ.get("FLASK_ENV", "production")
@@ -21,12 +26,9 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or (
         "dev-secret-change-in-production" if not IS_PRODUCTION else ""
     )
-    # MySQL — em produção defina DATABASE_URL no .env
-    DATABASE_URL = os.environ.get(
-        "DATABASE_URL",
-        "mysql+pymysql://root:12345678@localhost:3306/drg_br"
-    )
-    SQLALCHEMY_DATABASE_URI = DATABASE_URL
+    DATABASE_URL = _DATABASE_URL_RAW or None
+    # Em modo instalação usamos SQLite em memória para o app não quebrar; não será usado para dados
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL if not NEEDS_SETUP else "sqlite:///:memory:"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # pool_recycle evita erro no PythonAnywhere (conexões fechadas após ~300s)
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True, "pool_recycle": 280}

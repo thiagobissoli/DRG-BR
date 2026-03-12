@@ -20,23 +20,9 @@
 
 ---
 
-## Frontend (React/Vite)
+## Frontend (estático)
 
-1. **Build de produção**:
-   ```bash
-   cd frontend
-   npm ci
-   npm run build
-   ```
-   Saída em `frontend/build/`.
-
-2. **URL do backend**: se o frontend for servido em outro domínio que o backend, crie `frontend/.env.production` (ou defina no CI) com:
-   ```bash
-   VITE_API_URL=https://api.seudominio.com
-   ```
-   Depois rode `npm run build` de novo. Se não definir, o frontend usa a mesma origem (adequado quando há proxy reverso servindo API e SPA no mesmo host).
-
-3. **Servir os arquivos**: aponte o servidor web (nginx/Apache) para a pasta `frontend/build/`; configure fallback para `index.html` nas rotas do React (HashRouter usa `#`, então não é necessário rewrite se usar `#/`).
+O frontend é HTML/JS + Bootstrap/AdminLTE em `frontend/static` e `frontend/public/adminlte`. O Flask serve esses arquivos quando existe a pasta `frontend/static`; não há build nem Node.js. Em produção, o mesmo servidor que roda o Flask (gunicorn atrás de nginx/Apache) deve servir as rotas não-API para o `index.html` e os arquivos estáticos — o código em `app/__init__.py` já faz isso quando `frontend/static` existe.
 
 ---
 
@@ -45,5 +31,5 @@
 - [ ] `.env` com `FLASK_ENV=production`, `SECRET_KEY`, `JWT_SECRET_KEY`, `DATABASE_URL`, `CORS_ORIGINS`
 - [ ] Backend rodando com gunicorn (ou outro WSGI)
 - [ ] HTTPS no proxy reverso
-- [ ] Frontend build com `VITE_API_URL` se API em outro domínio
+- [ ] Frontend estático em `frontend/static` e `frontend/public` (servido pelo Flask)
 - [ ] Banco MySQL acessível e migrado/criado (`db.create_all()` roda na subida do app)

@@ -8,7 +8,7 @@ bp = Blueprint("roles", __name__)
 
 PERMISSION_NAMES = [
     "extract.run", "train.run", "predict.use",
-    "api_key.manage", "user.manage", "role.manage", "usage.view",
+    "api_key.manage", "user.manage", "role.manage", "usage.view", "config.manage",
 ]
 
 

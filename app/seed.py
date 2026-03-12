@@ -11,7 +11,7 @@ from app.models.trained_model import TrainedModel
 
 PERMISSION_NAMES = [
     "extract.run", "train.run", "predict.use",
-    "api_key.manage", "user.manage", "role.manage", "usage.view",
+    "api_key.manage", "user.manage", "role.manage", "usage.view", "config.manage",
 ]
 
 
