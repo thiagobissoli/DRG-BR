@@ -26,6 +26,8 @@ data/cache/
 *.db
 models/*
 !models/.gitkeep
+# Código Python do pacote models/ (predição DRG) deve ser versionado
+!models/*.py
 
 # IDE / SO
 .idea/
