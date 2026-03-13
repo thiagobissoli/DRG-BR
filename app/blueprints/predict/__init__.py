@@ -45,6 +45,12 @@ def _to_serializable(obj):
 def _get_predictor(model_dir: str):
     global _predictor_cache
     if model_dir not in _predictor_cache:
+        import sys
+        from pathlib import Path
+        # Garantir que a raiz do projeto está em sys.path (evita resolver app.models em vez de models/)
+        _root = Path(__file__).resolve().parent.parent.parent.parent
+        if str(_root) not in sys.path:
+            sys.path.insert(0, str(_root))
         from inference.predictor import DRGPredictor
         _predictor_cache[model_dir] = DRGPredictor.load(model_dir)
     return _predictor_cache[model_dir]
