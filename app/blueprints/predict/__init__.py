@@ -83,12 +83,27 @@ def _log_usage(api_key_id: int, endpoint: str, method: str, status_code: int, re
     db.session.commit()
 
 
+def _extract_api_key():
+    """Obtém a chave API do header X-API-Key, do body JSON ou de Authorization: Bearer."""
+    raw = request.headers.get("X-API-Key")
+    if not raw:
+        body = request.get_json(silent=True) or {}
+        raw = body.get("api_key")
+    if not raw and request.headers.get("Authorization"):
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            raw = auth[7:]
+    if raw is not None:
+        raw = str(raw).strip().replace("\r", "").replace("\n", "").replace("\x00", "")
+    return raw or None
+
+
 @bp.route("/predict", methods=["POST"])
 def predict():
-    api_key_raw = request.headers.get("X-API-Key") or (request.get_json() or {}).get("api_key")
-    if not api_key_raw or not str(api_key_raw).strip():
+    api_key_raw = _extract_api_key()
+    if not api_key_raw:
         return jsonify({"error": "X-API-Key header required"}), 401
-    key_obj = ApiKey.validate(str(api_key_raw).strip())
+    key_obj = ApiKey.validate(api_key_raw)
     if not key_obj:
         return jsonify({"error": "Invalid API key"}), 403
     if not _check_quota(key_obj.id):
@@ -96,7 +111,7 @@ def predict():
         return jsonify({"error": "Quota exceeded (requests per day)"}), 429
 
     t0 = datetime.utcnow()
-    data = request.get_json() or {}
+    data = request.get_json(silent=True) or {}
     model_id = data.get("model_id") or request.args.get("model_id")
     model_name = data.get("model_name") or request.args.get("model_name")
     model_dir = None

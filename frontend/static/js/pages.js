@@ -1241,6 +1241,109 @@ window.DRG_PAGES = (function () {
     });
   }
 
+  function apiUse(container) {
+    var baseUrl = typeof window.DRG_BASE_URL !== 'undefined' && window.DRG_BASE_URL ? window.DRG_BASE_URL : (window.location.origin || '');
+    container.innerHTML =
+      '<div class="card mb-4">' +
+      '  <div class="card-header bg-info text-white"><h5 class="mb-0"><i class="fas fa-plug mr-2"></i>Usar API de predição (outros sistemas)</h5></div>' +
+      '  <div class="card-body">' +
+      '    <p class="text-muted">Informe sua chave API, selecione o modelo e os parâmetros para testar a predição. Use esta tela para integrar ou validar chamadas de outros sistemas.</p>' +
+      '    <div class="form-group"><label class="font-weight-bold">Chave API <span class="text-danger">*</span></label>' +
+      '      <input type="text" class="form-control font-monospace" id="api-use-key" placeholder="Cole sua chave API (criada em Chaves API)" autocomplete="off">' +
+      '      <small class="form-text text-muted">A chave é enviada no header <code>X-API-Key</code>.</small></div>' +
+      '    <div class="form-group"><label class="font-weight-bold">Modelo</label>' +
+      '      <select class="form-control" id="api-use-model"><option value="">— Carregando modelos… —</option></select>' +
+      '      <small class="form-text text-muted">Opcional. Se não escolher, será usado o modelo padrão.</small></div>' +
+      '    <hr><h6 class="font-weight-bold">Parâmetros da predição</h6>' +
+      '    <div class="row">' +
+      '      <div class="col-md-6"><div class="form-group"><label>CID principal <span class="text-danger">*</span></label>' +
+      '        <input type="text" class="form-control" id="api-use-cid" placeholder="Ex: J189" maxlength="10"></div></div>' +
+      '      <div class="col-md-6"><div class="form-group"><label>CIDs secundários</label>' +
+      '        <input type="text" class="form-control" id="api-use-cids" placeholder="Ex: N183, E119 (separados por vírgula)"></div></div>' +
+      '    </div>' +
+      '    <div class="row">' +
+      '      <div class="col-md-4"><div class="form-group"><label>Procedimento SIGTAP</label>' +
+      '        <input type="text" class="form-control" id="api-use-proc" placeholder="Ex: 0301010079"></div></div>' +
+      '      <div class="col-md-2"><div class="form-group"><label>Idade</label>' +
+      '        <input type="number" class="form-control" id="api-use-idade" value="50" min="0" max="150"></div></div>' +
+      '      <div class="col-md-3"><div class="form-group"><label>Sexo</label>' +
+      '        <select class="form-control" id="api-use-sexo"><option value="0">Indefinido</option><option value="1">Masculino</option><option value="2">Feminino</option></select></div></div>' +
+      '      <div class="col-md-3"><div class="form-group"><label>Urgência</label>' +
+      '        <select class="form-control" id="api-use-urgencia"><option value="0">Eletivo</option><option value="1" selected>Urgência</option></select></div></div>' +
+      '    </div>' +
+      '    <button type="button" class="btn btn-primary" id="api-use-submit"><i class="fas fa-play mr-1"></i> Executar predição</button>' +
+      '  </div>' +
+      '</div>' +
+      '<div class="card mb-4" id="api-use-result-card" style="display:none;">' +
+      '  <div class="card-header"><i class="fas fa-code mr-2"></i>Resposta da API</div>' +
+      '  <div class="card-body"><pre id="api-use-result-body" class="bg-light p-3 rounded mb-0 small" style="max-height:400px;overflow:auto;"></pre></div>' +
+      '</div>';
+    var modelSelect = document.getElementById('api-use-model');
+    fetch(baseUrl + '/api/v1/models')
+      .then(function (r) { return r.json(); })
+      .then(function (models) {
+        modelSelect.innerHTML = '<option value="">Modelo padrão</option>';
+        (models || []).forEach(function (m) {
+          var opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.name + (m.is_default ? ' (padrão)' : '');
+          modelSelect.appendChild(opt);
+        });
+      })
+      .catch(function () {
+        modelSelect.innerHTML = '<option value="">Erro ao carregar modelos</option>';
+      });
+    document.getElementById('api-use-submit').addEventListener('click', function () {
+      var key = (document.getElementById('api-use-key').value || '').trim();
+      var cid = (document.getElementById('api-use-cid').value || '').trim();
+      if (!key) { alert('Informe a chave API.'); return; }
+      if (!cid) { alert('Informe o CID principal.'); return; }
+      var cidsStr = (document.getElementById('api-use-cids').value || '').trim();
+      var cidsSec = cidsStr ? cidsStr.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : undefined;
+      var body = {
+        cid_principal: cid,
+        cids_secundarios: cidsSec && cidsSec.length ? cidsSec : undefined,
+        procedimento_sigtap: (document.getElementById('api-use-proc').value || '').trim() || undefined,
+        idade: parseInt(document.getElementById('api-use-idade').value, 10) || 50,
+        sexo: parseInt(document.getElementById('api-use-sexo').value, 10),
+        urgencia: parseInt(document.getElementById('api-use-urgencia').value, 10)
+      };
+      var modelVal = modelSelect.value;
+      if (modelVal) body.model_id = parseInt(modelVal, 10);
+      var btn = document.getElementById('api-use-submit');
+      var resultCard = document.getElementById('api-use-result-card');
+      var resultBody = document.getElementById('api-use-result-body');
+      btn.disabled = true;
+      resultBody.textContent = 'Aguardando resposta…';
+      resultCard.style.display = '';
+      fetch(baseUrl + '/api/v1/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': key },
+        body: JSON.stringify(body)
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            return { status: r.status, data: data };
+          }).catch(function () {
+            return { status: r.status, data: { error: r.statusText } };
+          });
+        })
+        .then(function (out) {
+          var text = 'Status: ' + out.status + '\n\n' + JSON.stringify(out.data, null, 2);
+          resultBody.textContent = text;
+          resultBody.style.color = out.status >= 200 && out.status < 300 ? '' : '';
+          resultCard.querySelector('.card-header').className = 'card-header ' + (out.status >= 200 && out.status < 300 ? 'bg-success text-white' : 'bg-danger text-white');
+          resultCard.querySelector('.card-header').innerHTML = '<i class="fas fa-code mr-2"></i>Resposta da API (HTTP ' + out.status + ')';
+        })
+        .catch(function (err) {
+          resultBody.textContent = 'Erro: ' + (err.message || err);
+          resultCard.querySelector('.card-header').className = 'card-header bg-danger text-white';
+          resultCard.querySelector('.card-header').innerHTML = '<i class="fas fa-code mr-2"></i>Erro na requisição';
+        })
+        .finally(function () { btn.disabled = false; });
+    });
+  }
+
   function apiDocs(container) {
     var baseUrl = typeof window.DRG_BASE_URL !== 'undefined' && window.DRG_BASE_URL ? window.DRG_BASE_URL : (window.location.origin || '');
     container.innerHTML =
@@ -1652,6 +1755,7 @@ window.DRG_PAGES = (function () {
     training: training,
     prediction: prediction,
     apiDocs: apiDocs,
+    apiUse: apiUse,
     profile: profile,
     settings: settings,
     page404: page404,

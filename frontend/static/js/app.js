@@ -15,6 +15,7 @@
     'training': 'training',
     'prediction': 'prediction',
     'api-docs': 'apiDocs',
+    'api-use': 'apiUse',
     'profile': 'profile',
     'settings': 'settings',
     '404': 'page404',
@@ -115,7 +116,7 @@
 
     showApp();
     setActiveNav(route);
-    var titles = { dashboard: 'Dashboard', users: 'Usuários', roles: 'Perfis', apikeys: 'Chaves API', extraction: 'Extração', training: 'Treinamento', prediction: 'Predição', apiDocs: 'Documentação da API', profile: 'Perfil', settings: 'Configurações do sistema', page404: 'Não encontrado', page500: 'Erro' };
+    var titles = { dashboard: 'Dashboard', users: 'Usuários', roles: 'Perfis', apikeys: 'Chaves API', extraction: 'Extração', training: 'Treinamento', prediction: 'Predição', apiDocs: 'Documentação da API', apiUse: 'Usar API', profile: 'Perfil', settings: 'Configurações do sistema', page404: 'Não encontrado', page500: 'Erro' };
     setTitle(titles[route] || route, titles[route] || route);
     var appContent = document.getElementById('app-content');
     if (appContent) renderPage(route, appContent);

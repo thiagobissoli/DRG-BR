@@ -15,6 +15,9 @@ IS_PRODUCTION = os.environ.get("FLASK_ENV", "production") == "production"
 
 # Modo instalação: quando DATABASE_URL não está definido (ou é placeholder)
 _DATABASE_URL_RAW = (os.environ.get("DATABASE_URL") or "").strip()
+# Usar PyMySQL em vez de MySQLdb (evita "No module named 'MySQLdb'" quando só pymysql está instalado)
+if _DATABASE_URL_RAW.startswith("mysql://") and "pymysql" not in _DATABASE_URL_RAW:
+    _DATABASE_URL_RAW = _DATABASE_URL_RAW.replace("mysql://", "mysql+pymysql://", 1)
 NEEDS_SETUP = not _DATABASE_URL_RAW or _DATABASE_URL_RAW.lower() in ("", "not_configured", "not configured")
 
 

@@ -153,6 +153,19 @@ O frontend é **estático** (HTML/JS + Bootstrap/AdminLTE, sem React). Os arquiv
 
 Se o banco acabou de ser criado, as tabelas e o seed (usuário inicial) são criados na primeira requisição que carrega o app. Se o seed criar um usuário padrão, use-o para login ou crie um novo pela interface (se houver registro) ou por script/consola.
 
+Para criar as tabelas manualmente no Bash (venv ativado), use `db` de `app.extensions`:
+
+```bash
+python3 -c "
+from app import create_app
+from app.extensions import db
+app = create_app()
+with app.app_context():
+    db.create_all()
+print('Banco conectado e tabelas criadas.')
+"
+```
+
 Caso o seed não crie usuário, você pode criar um admin pela consola Bash:
 
 ```bash

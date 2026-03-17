@@ -8,8 +8,16 @@ import secrets
 from app.extensions import db
 
 
+def _normalize_key(key: str) -> str:
+    """Remove espaços e caracteres de controle que podem vir do header/body."""
+    if not key:
+        return ""
+    s = str(key).strip().replace("\r", "").replace("\n", "").replace("\x00", "")
+    return s
+
+
 def hash_key(key: str) -> str:
-    return hashlib.sha256(key.encode("utf-8")).hexdigest()
+    return hashlib.sha256(_normalize_key(key).encode("utf-8")).hexdigest()
 
 
 class ApiKey(db.Model):
@@ -35,10 +43,17 @@ class ApiKey(db.Model):
 
     @staticmethod
     def validate(plain_key: str) -> "ApiKey":
-        if not plain_key or not plain_key.strip():
+        normalized = _normalize_key(plain_key) if plain_key is not None else ""
+        if not normalized:
             return None
-        h = hash_key(plain_key.strip())
-        return ApiKey.query.filter_by(key_hash=h).first()
+        h = hash_key(normalized)
+        key_obj = ApiKey.query.filter_by(key_hash=h).first()
+        # Fallback: se no passado key_hash foi armazenado em texto plano (legado)
+        if not key_obj and len(normalized) > 32 and " " not in normalized:
+            # não aceitar 64 chars hex (seria o próprio hash) por segurança
+            if len(normalized) != 64 or not all(c in "0123456789abcdef" for c in normalized.lower()):
+                key_obj = ApiKey.query.filter_by(key_hash=normalized).first()
+        return key_obj
 
 
 class ApiUsageLog(db.Model):
